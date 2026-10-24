@@ -1,0 +1,185 @@
+[gd_scene format=3 uid="uid://ehemy8uoml31"]
+
+[ext_resource type="Script" uid="uid://cdnso0x0gt616" path="res://scripts/game.gd" id="1_game"]
+
+[sub_resource type="StyleBoxFlat" id="Style_hover"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0.224, 0.369, 0.537, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0.173, 0.294, 0.439, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_pressed"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0.118, 0.231, 0.369, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="Theme" id="Theme_main"]
+default_font_size = 17
+Button/colors/font_color = Color(0.918, 0.949, 1, 1)
+Button/styles/hover = SubResource("Style_hover")
+Button/styles/normal = SubResource("Style_button")
+Button/styles/pressed = SubResource("Style_pressed")
+Label/colors/font_color = Color(0.89, 0.925, 0.98, 1)
+OptionButton/styles/hover = SubResource("Style_hover")
+OptionButton/styles/normal = SubResource("Style_button")
+OptionButton/styles/pressed = SubResource("Style_pressed")
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.082, 0.118, 0.176, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.153, 0.204, 0.29, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[node name="Main" type="Control" unique_id=1712465480]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_main")
+script = ExtResource("1_game")
+
+[node name="Title" type="Label" parent="." unique_id=1781463931]
+layout_mode = 0
+offset_left = 46.0
+offset_top = 56.0
+offset_right = 700.0
+offset_bottom = 107.0
+theme_override_font_sizes/font_size = 38
+text = "Четыре в ряд"
+
+[node name="Rules" type="Label" parent="." unique_id=139624712]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 116.0
+offset_right = 1032.0
+offset_bottom = 143.0
+theme_override_colors/font_color = Color(0.62, 0.682, 0.78, 1)
+text = "Соберите четыре фишки в ряд (по горизонтали, вертикали или диагонали) чтобы победить"
+
+[node name="Info" type="PanelContainer" parent="." unique_id=714552219]
+layout_mode = 0
+offset_left = 648.0
+offset_top = 166.0
+offset_right = 1032.0
+offset_bottom = 690.0
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="Info" unique_id=681747448]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="Info/Margin" unique_id=1875131733]
+layout_mode = 2
+theme_override_constants/separation = 13
+
+[node name="SectionTitle" type="Label" parent="Info/Margin/Content" unique_id=1260588527]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.537, 0.608, 0.706, 1)
+theme_override_font_sizes/font_size = 13
+text = "ЧЕЛОВЕК ПРОТИВ ИИ"
+
+[node name="Status" type="Label" parent="Info/Margin/Content" unique_id=826405804]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Ваш ход"
+
+[node name="TurnHint" type="Label" parent="Info/Margin/Content" unique_id=1084818982]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.682, 0.78, 1)
+text = "Выберите столбец, чтобы опустить красную фишку. Вы ходите первым."
+autowrap_mode = 2
+
+[node name="Separator" type="HSeparator" parent="Info/Margin/Content" unique_id=1119179826]
+layout_mode = 2
+
+[node name="DepthTitle" type="Label" parent="Info/Margin/Content" unique_id=989731383]
+layout_mode = 2
+text = "Глубина поиска"
+
+[node name="Depth" type="OptionButton" parent="Info/Margin/Content" unique_id=1203468038]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+
+[node name="AnalysisTitle" type="Label" parent="Info/Margin/Content" unique_id=637617100]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Последний ход ИИ"
+
+[node name="Analysis" type="Label" parent="Info/Margin/Content" unique_id=2143561911]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.62, 0.682, 0.78, 1)
+theme_override_font_sizes/font_size = 16
+text = "Сделайте первый ход.
+Здесь появится результат поиска."
+autowrap_mode = 2
+
+[node name="HumanLegend" type="Label" parent="." unique_id=1972791535]
+layout_mode = 0
+offset_left = 78.0
+offset_top = 710.0
+offset_right = 225.0
+offset_bottom = 740.0
+text = "Ваши фишки"
+
+[node name="AILegend" type="Label" parent="." unique_id=1902738392]
+layout_mode = 0
+offset_left = 266.0
+offset_top = 710.0
+offset_right = 424.0
+offset_bottom = 740.0
+text = "Фишки ИИ"
+
+[node name="NewGame" type="Button" parent="." unique_id=117848951]
+layout_mode = 0
+offset_left = 648.0
+offset_top = 710.0
+offset_right = 1032.0
+offset_bottom = 758.0
+mouse_default_cursor_shape = 2
+text = "Новая игра"
+
+[node name="Controls" type="Label" parent="." unique_id=724860746]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 758.0
+offset_right = 620.0
+offset_bottom = 782.0
+theme_override_colors/font_color = Color(0.537, 0.608, 0.706, 1)
+theme_override_font_sizes/font_size = 14
+text = "Управление: Клик мыши или 1-7 на клавиатуре. R - Рестарт"
