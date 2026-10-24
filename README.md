@@ -29,6 +29,7 @@
 ## Демонстрация
 
 [Видео игрового процесса](./gameplay.mp4)
+[Видео на ютубе](https://www.youtube.com/watch?v=a1BACyXuayE)
 
 ### Победа игрока
 
