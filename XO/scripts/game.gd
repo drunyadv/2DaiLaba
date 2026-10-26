@@ -1,8 +1,6 @@
 extends Control
 
 const Minimax = preload("res://scripts/minimax.gd")
-const BOARD_ORIGIN = Vector2(48, 210)
-const CELL_SIZE = 80.0
 const HUMAN_COLOR = Color("ef7373")
 const AI_COLOR = Color("f3c969")
 
@@ -15,22 +13,97 @@ var hovered_column: int = -1
 var last_piece: Vector2i = Vector2i(-1, -1)
 var winning_cells: Array[Vector2i] = []
 var board_style: StyleBoxFlat = StyleBoxFlat.new()
+var board_origin: Vector2 = Vector2(48, 210)
+var cell_size: float = 80.0
+var legend_y: float = 725.0
 
 @onready var status_label: Label = $Info/Margin/Content/Status
 @onready var turn_hint: Label = $Info/Margin/Content/TurnHint
-@onready var depth_select: OptionButton = $Info/Margin/Content/Depth
+@onready var depth_select: OptionButton = $Actions/Depth
 @onready var analysis_label: Label = $Info/Margin/Content/Analysis
-@onready var new_game_button: Button = $NewGame
+@onready var new_game_button: Button = $Actions/NewGame
+@onready var pop_sound: AudioStreamPlayer = $PopSound
 
 
 func _ready() -> void:
 	board_style.bg_color = Color("29466c")
 	board_style.set_corner_radius_all(16)
-	for text in ["3 полухода", "4 полухода", "5 полуходов"]:
+	for text in ["Глубина: 3", "Глубина: 4", "Глубина: 5"]:
 		depth_select.add_item(text)
 	depth_select.select(1)
 	new_game_button.pressed.connect(start_new_game)
+	get_window().size_changed.connect(update_layout)
+	update_layout()
 	start_new_game()
+
+
+func update_layout() -> void:
+	var pixels: Vector2 = Vector2(get_window().size)
+	if pixels.x <= 0 or pixels.y <= 0:
+		return
+	var portrait: bool = pixels.x < pixels.y
+	var width: float = (600.0 if pixels.x > pixels.y * 0.68 else 420.0) if portrait else 1080.0
+	var height: float = roundf(width * pixels.y / pixels.x)
+	get_window().content_scale_size = Vector2i(int(width), int(height))
+	var compact: bool = height < 850.0 if portrait else height < 620.0
+	var margin: float = 18.0 if portrait else 32.0
+	var info: PanelContainer = $Info
+	var actions: HBoxContainer = $Actions
+	var info_rect: Rect2
+	if portrait:
+		cell_size = minf((width - margin * 2) / 7.0, maxf(32.0, (height - 390.0) / 6.0))
+		board_origin = Vector2((width - cell_size * 7) / 2.0, 148)
+		legend_y = board_origin.y + cell_size * 6 + 24
+		place_control(actions, Rect2(margin, legend_y + 24, width - margin * 2, 56))
+		var info_y: float = actions.position.y + 72
+		info_rect = Rect2(margin, info_y, width - margin * 2, height - info_y - margin)
+	else:
+		board_origin = Vector2(margin, 128 if compact else 160)
+		cell_size = minf(80.0, minf((width * 0.56 - margin - 20) / 7.0,
+			(height - board_origin.y - 66) / 6.0))
+		legend_y = board_origin.y + cell_size * 6 + 24
+		var info_x: float = board_origin.x + cell_size * 7 + 28
+		info_rect = Rect2(info_x, board_origin.y - 24,
+			width - info_x - margin, height - board_origin.y - margin - 48)
+		place_control(actions, Rect2(info_x, height - margin - 56, info_rect.size.x, 56))
+	place_control($Title, Rect2(margin, 18 if portrait else 20, width - margin * 2, 44))
+	$Title.add_theme_font_size_override("font_size", 32 if portrait or compact else 38)
+	place_control($Rules, Rect2(margin, 66 if portrait else 76 if not compact else 62,
+		width - margin * 2, 44 if portrait else 40))
+	$Rules.add_theme_font_size_override("font_size", 15 if portrait or compact else 17)
+	place_control($HumanLegend, Rect2(board_origin.x + 22, legend_y - 13, cell_size * 3, 26))
+	place_control($AILegend, Rect2(board_origin.x + cell_size * 3.5 + 22, legend_y - 13,
+		cell_size * 3, 26))
+	$HumanLegend.add_theme_font_size_override("font_size", 16)
+	$AILegend.add_theme_font_size_override("font_size", 16)
+	$Controls.visible = not portrait
+	$Controls.text = "Клик или клавиши 1-7  /  R - новая игра"
+	place_control($Controls, Rect2(margin, height - 27, cell_size * 7, 22))
+	$Info/Margin/Content/SectionTitle.visible = not portrait and not compact
+	$Info/Margin/Content/Separator.visible = not portrait and not compact
+	$Info/Margin/Content/AnalysisTitle.visible = not compact
+	turn_hint.visible = not compact
+	turn_hint.custom_minimum_size.y = 0
+	turn_hint.add_theme_font_size_override("font_size", 15 if portrait else 17)
+	status_label.add_theme_font_size_override("font_size", 24 if portrait or compact else 28)
+	analysis_label.add_theme_font_size_override("font_size", 14 if portrait else 16)
+	analysis_label.max_lines_visible = (2 if portrait and height < 700 else 3) if compact else -1
+	$Info/Margin/Content.add_theme_constant_override("separation", 6 if compact else 10)
+	for side in ["left", "top", "right", "bottom"]:
+		$Info/Margin.add_theme_constant_override("margin_" + side, 12 if portrait or compact else 20)
+	place_control(info, info_rect)
+	info.set_deferred("size", info_rect.size)
+	queue_redraw()
+
+
+func place_control(control: Control, rect: Rect2) -> void:
+	control.position = rect.position
+	control.size = rect.size
+
+
+func play_pop() -> void:
+	pop_sound.pitch_scale = randf_range(0.94, 1.06) if randf() < 0.35 else 1.0
+	pop_sound.play()
 
 
 func start_new_game() -> void:
@@ -77,12 +150,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func column_at_position(point: Vector2) -> int:
-	var mouse: Vector2 = point - BOARD_ORIGIN
-	if mouse.x < 0 or mouse.x >= CELL_SIZE * Minimax.COLUMNS:
+	var mouse: Vector2 = point - board_origin
+	if mouse.x < 0 or mouse.x >= cell_size * Minimax.COLUMNS:
 		return -1
-	if mouse.y < -40 or mouse.y >= CELL_SIZE * Minimax.ROWS:
+	if mouse.y < -32 or mouse.y >= cell_size * Minimax.ROWS:
 		return -1
-	return int(mouse.x / CELL_SIZE)
+	return int(mouse.x / cell_size)
 
 
 func play_human_move(column: int) -> void:
@@ -91,6 +164,7 @@ func play_human_move(column: int) -> void:
 	var row: int = opponent.drop_piece(board, column, Minimax.HUMAN)
 	if row == -1:
 		return
+	play_pop()
 	last_piece = Vector2i(column, row)
 	if finish_if_needed(row, column, Minimax.HUMAN):
 		return
@@ -113,6 +187,7 @@ func play_human_move(column: int) -> void:
 		finish_draw()
 		return
 	var ai_row: int = opponent.drop_piece(board, ai_column, Minimax.AI)
+	play_pop()
 	last_piece = Vector2i(ai_column, ai_row)
 	analysis_label.text = "Столбец: %d  |  Глубина: %d\nОценка: %d\nУзлов Minimax: %d\n\n%s" % [
 		ai_column + 1, depth, result["score"], result["nodes"], result["reason"]
@@ -159,20 +234,20 @@ func refresh_board() -> void:
 
 
 func cell_center(row: int, column: int) -> Vector2:
-	return BOARD_ORIGIN + Vector2(column + 0.5, row + 0.5) * CELL_SIZE
+	return board_origin + Vector2(column + 0.5, row + 0.5) * cell_size
 
 
 func _draw() -> void:
 	if board.is_empty():
 		return
-	draw_style_box(board_style, Rect2(BOARD_ORIGIN, Vector2(7, 6) * CELL_SIZE))
+	draw_style_box(board_style, Rect2(board_origin, Vector2(7, 6) * cell_size))
 	for column in range(Minimax.COLUMNS):
 		var number_color: Color = Color("899bb4")
 		if column == hovered_column and board[0][column] == Minimax.EMPTY:
 			number_color = HUMAN_COLOR
-			draw_rect(Rect2(BOARD_ORIGIN + Vector2(column * CELL_SIZE, 0),
-				Vector2(CELL_SIZE, Minimax.ROWS * CELL_SIZE)), Color(1, 1, 1, 0.045))
-		var number_position: Vector2 = BOARD_ORIGIN + Vector2((column + 0.5) * CELL_SIZE - 5, -20)
+			draw_rect(Rect2(board_origin + Vector2(column * cell_size, 0),
+				Vector2(cell_size, Minimax.ROWS * cell_size)), Color(1, 1, 1, 0.045))
+		var number_position: Vector2 = board_origin + Vector2((column + 0.5) * cell_size - 5, -18)
 		draw_string(ThemeDB.fallback_font, number_position, str(column + 1),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, number_color)
 
@@ -184,17 +259,20 @@ func _draw() -> void:
 				color = HUMAN_COLOR
 			elif board[row][column] == Minimax.AI:
 				color = AI_COLOR
-			draw_circle(center + Vector2(0, 2), 31, Color("1b3050"), true, -1, true)
-			draw_circle(center, 29, color, true, -1, true)
+			draw_circle(center + Vector2(0, cell_size * 0.025), cell_size * 0.39,
+				Color("1b3050"), true, -1, true)
+			draw_circle(center, cell_size * 0.36, color, true, -1, true)
 
 	if hovered_column != -1 and board[0][hovered_column] == Minimax.EMPTY:
 		for row in range(Minimax.ROWS - 1, -1, -1):
 			if board[row][hovered_column] == Minimax.EMPTY:
-				draw_circle(cell_center(row, hovered_column), 29, Color(HUMAN_COLOR, 0.3), true, -1, true)
+				draw_circle(cell_center(row, hovered_column), cell_size * 0.36,
+					Color(HUMAN_COLOR, 0.3), true, -1, true)
 				break
 	if last_piece.x != -1:
-		draw_circle(cell_center(last_piece.y, last_piece.x), 4, Color(1, 1, 1, 0.85), true, -1, true)
+		draw_circle(cell_center(last_piece.y, last_piece.x), cell_size * 0.05,
+			Color(1, 1, 1, 0.85), true, -1, true)
 	for cell in winning_cells:
-		draw_arc(cell_center(cell.y, cell.x), 33, 0, TAU, 48, Color("ffffff"), 3, true)
-	draw_circle(Vector2(60, 725), 7, HUMAN_COLOR, true, -1, true)
-	draw_circle(Vector2(248, 725), 7, AI_COLOR, true, -1, true)
+		draw_arc(cell_center(cell.y, cell.x), cell_size * 0.41, 0, TAU, 48, Color("ffffff"), 3, true)
+	draw_circle(Vector2(board_origin.x + 7, legend_y), 6, HUMAN_COLOR, true, -1, true)
+	draw_circle(Vector2(board_origin.x + cell_size * 3.5 + 7, legend_y), 6, AI_COLOR, true, -1, true)
